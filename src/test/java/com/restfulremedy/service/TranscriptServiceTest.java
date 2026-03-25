@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.quality.Strictness;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class TranscriptServiceTest {
 
     @Mock
@@ -29,9 +32,23 @@ class TranscriptServiceTest {
 
     private TranscriptService transcriptService;
 
+    private RestClient.RequestBodyUriSpec requestSpec;
+    private RestClient.RequestBodySpec bodySpec;
+    private RestClient.ResponseSpec responseSpec;
+
     @BeforeEach
     void setUp() {
         transcriptService = new TranscriptService(restClient, config, new ObjectMapper());
+
+        requestSpec = mock(RestClient.RequestBodyUriSpec.class);
+        bodySpec = mock(RestClient.RequestBodySpec.class);
+        responseSpec = mock(RestClient.ResponseSpec.class);
+
+        when(restClient.post()).thenReturn(requestSpec);
+        when(requestSpec.uri(anyString())).thenReturn(bodySpec);
+        when(bodySpec.body(any(Object.class))).thenReturn(bodySpec);
+        when(bodySpec.retrieve()).thenReturn(responseSpec);
+        when(config.getModel()).thenReturn("claude-sonnet-4-20250514");
     }
 
     @Test
@@ -44,18 +61,7 @@ class TranscriptServiceTest {
         Map<String, Object> apiResponse = Map.of(
                 "content", List.of(Map.of("type", "text", "text", aiJson))
         );
-
-        // Mock the RestClient chain
-        RestClient.RequestBodyUriSpec requestSpec = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-
-        when(restClient.post()).thenReturn(requestSpec);
-        when(requestSpec.uri(anyString())).thenReturn(bodySpec);
-        when(bodySpec.body(any())).thenReturn(bodySpec);
-        when(bodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Map.class)).thenReturn(apiResponse);
-        when(config.getModel()).thenReturn("claude-sonnet-4-20250514");
 
         Map<String, Object> result = transcriptService.analyzeTranscript("Patient has high blood pressure");
 
@@ -68,20 +74,11 @@ class TranscriptServiceTest {
     @Test
     void analyzeTranscript_emptyContent_throwsException() {
         Map<String, Object> apiResponse = Map.of("content", List.of());
-
-        RestClient.RequestBodyUriSpec requestSpec = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-
-        when(restClient.post()).thenReturn(requestSpec);
-        when(requestSpec.uri(anyString())).thenReturn(bodySpec);
-        when(bodySpec.body(any())).thenReturn(bodySpec);
-        when(bodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Map.class)).thenReturn(apiResponse);
-        when(config.getModel()).thenReturn("claude-sonnet-4-20250514");
 
-        assertThrows(RuntimeException.class, () ->
+        RuntimeException ex = assertThrows(RuntimeException.class, () ->
                 transcriptService.analyzeTranscript("Some transcript"));
+        assertTrue(ex.getMessage().contains("Empty response"));
     }
 
     @Test
@@ -89,17 +86,7 @@ class TranscriptServiceTest {
         Map<String, Object> apiResponse = Map.of(
                 "content", List.of(Map.of("type", "text", "text", "not valid json!!!"))
         );
-
-        RestClient.RequestBodyUriSpec requestSpec = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec bodySpec = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
-
-        when(restClient.post()).thenReturn(requestSpec);
-        when(requestSpec.uri(anyString())).thenReturn(bodySpec);
-        when(bodySpec.body(any())).thenReturn(bodySpec);
-        when(bodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.body(Map.class)).thenReturn(apiResponse);
-        when(config.getModel()).thenReturn("claude-sonnet-4-20250514");
 
         RuntimeException ex = assertThrows(RuntimeException.class, () ->
                 transcriptService.analyzeTranscript("Some transcript"));
