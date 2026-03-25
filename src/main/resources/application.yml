@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+anthropic:
+  api-key: ${CLAUDE_KEY:}
+  model: claude-sonnet-4-20250514
