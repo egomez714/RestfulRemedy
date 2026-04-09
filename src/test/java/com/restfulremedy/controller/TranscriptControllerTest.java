@@ -2,6 +2,7 @@ package com.restfulremedy.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restfulremedy.dto.TranscriptRequest;
+import com.restfulremedy.service.FhirService;
 import com.restfulremedy.service.TranscriptService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,9 @@ class TranscriptControllerTest {
 
     @MockitoBean
     private TranscriptService transcriptService;
+
+    @MockitoBean
+    private FhirService fhirService;
 
     @Autowired
     private ObjectMapper objectMapper;
