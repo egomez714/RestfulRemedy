@@ -1,6 +1,22 @@
 server:
   port: 8080
 
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/restfulremedy}
+    username: ${DATABASE_USERNAME:restfulremedy}
+    password: ${DATABASE_PASSWORD:restfulremedy}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # "update" auto-creates/migrates tables to match entities. Fine for
+      # dev. In production we'd swap this for Flyway or Liquibase migrations.
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
 anthropic:
   api-key: ${CLAUDE_KEY:}
   model: claude-sonnet-4-20250514
