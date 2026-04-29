@@ -2,6 +2,7 @@ package com.restfulremedy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.restfulremedy.config.AnthropicConfig;
+import com.restfulremedy.prompts.TranscriptPrompts;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -26,32 +27,10 @@ public class TranscriptService {
     public Map<String, Object> analyzeTranscript(String transcript) {
         log.info("Analyzing transcript of length {}", transcript.length());
 
-        String systemPrompt = """
-                You are a medical coding assistant. Given a doctor visit transcript,
-                extract the following and return ONLY valid JSON (no markdown, no explanation):
-                {
-                  "medications": [
-                    {
-                      "name": "medication name",
-                      "dosage": "dosage if mentioned",
-                      "rxnorm_code": "RxNorm code (look up the correct code)"
-                    }
-                  ],
-                  "diagnoses": [
-                    {
-                      "description": "diagnosis description",
-                      "icd10_code": "ICD-10 code (look up the correct code)"
-                    }
-                  ],
-                  "summary": "one-sentence summary of the visit"
-                }
-                Be accurate with medical codes. If you are unsure of a code, provide your best match.
-                """;
-
         Map<String, Object> requestBody = Map.of(
                 "model", config.getModel(),
                 "max_tokens", 1024,
-                "system", systemPrompt,
+                "system", TranscriptPrompts.EXTRACT_CLINICAL_DATA,
                 "messages", List.of(
                         Map.of("role", "user", "content", transcript)
                 )
