@@ -46,6 +46,7 @@ public class TranscriptController {
     public ResponseEntity<String> analyzeTranscriptFhir(@Valid @RequestBody TranscriptRequest request) {
         Map<String, Object> result = transcriptService.analyzeTranscript(request.getTranscript());
         Bundle bundle = fhirService.buildBundle(result);
+        fhirService.validate(bundle);
         String fhirJson = fhirService.serializeBundle(bundle);
         return ResponseEntity.ok()
                 .contentType(MediaType.valueOf("application/fhir+json"))
