@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: restfulremedy
+  namespace: restfulremedy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: restfulremedy
+  template:
+    metadata:
+      labels:
+        app: restfulremedy
+    spec:
+      containers:
+        - name: restfulremedy
+          # When using Minikube, build the image into Minikube's docker daemon
+          # (`eval $(minikube docker-env)` then `docker build -t restfulremedy:latest .`)
+          # and set imagePullPolicy: Never so K8s doesn't try to pull from a registry.
+          image: restfulremedy:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: restfulremedy-config
+            - secretRef:
+                name: restfulremedy-secrets
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: restfulremedy
+  namespace: restfulremedy
+spec:
+  type: NodePort
+  selector:
+    app: restfulremedy
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
