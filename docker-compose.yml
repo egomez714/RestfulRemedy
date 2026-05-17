@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: restfulremedy
+      POSTGRES_USER: restfulremedy
+      POSTGRES_PASSWORD: restfulremedy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U restfulremedy -d restfulremedy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/restfulremedy
+      DATABASE_USERNAME: restfulremedy
+      DATABASE_PASSWORD: restfulremedy
+      CLAUDE_KEY: ${CLAUDE_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

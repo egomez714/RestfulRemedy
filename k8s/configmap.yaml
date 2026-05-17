@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restfulremedy-config
+  namespace: restfulremedy
+data:
+  DATABASE_URL: "jdbc:postgresql://postgres:5432/restfulremedy"
+  DATABASE_USERNAME: "restfulremedy"
